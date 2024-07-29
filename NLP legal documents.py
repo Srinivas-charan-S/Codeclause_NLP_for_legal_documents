@@ -1,69 +1,56 @@
 import nltk
-from nltk.tokenize import word_tokenize, sent_tokenize
-from nltk.tag import pos_tag
-
-# Download NLTK resources (required for some functionalities)
 nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
+import spacy
 
-# Step 1: Data Collection and Preprocessing
+nlp = spacy.load('en_core_web_sm')
+
 def preprocess_text(text):
-    # Preprocessing steps such as removing metadata, headers, footers, etc.
-    # Example: implement code to remove irrelevant sections
-    preprocessed_text = text  # Placeholder, you can customize this according to your needs
-    return preprocessed_text
+    doc = nlp(text)
+    return ' '.join([token.lemma_ for token in doc if not token.is_stop])
+def extract_entities(text):
+    doc = nlp(text)
+    return [(entity.text, entity.label_) for entity in doc.ents]
+from transformers import pipeline
 
-# Step 2: Named Entity Recognition (NER)
-def perform_ner(text):
-    sentences = sent_tokenize(text)
-    tokenized_sentences = [word_tokenize(sentence) for sentence in sentences]
-    tagged_sentences = [pos_tag(sentence) for sentence in tokenized_sentences]
-    
-    # Extract named entities
-    named_entities = []
-    for tagged_sentence in tagged_sentences:
-        for chunk in nltk.ne_chunk(tagged_sentence):
-            if isinstance(chunk, nltk.tree.Tree) and chunk.label() != 'S':
-                entity = ' '.join([token for token, tag in chunk.leaves()])
-                named_entities.append((entity, chunk.label()))
-                
-    return named_entities
+summarizer = pipeline("summarization")
 
-# Step 3: Legal Terminology Identification
-def identify_legal_terminology(text):
-    # Implement code to identify legal terminologies using rules or dictionaries
-    # Example: Look for specific legal phrases or terms
-    legal_terms = []  # Placeholder, customize this according to your legal domain
-    return legal_terms
+def summarize_text(text):
+    return summarizer(text, max_length=130, min_length=30, do_sample=False)[0]['summary_text']
+import spacy
+from transformers import pipeline
 
-# Step 4: Key Information Extraction
-def extract_key_information(text):
-    # Implement code to extract key clauses, provisions, or sections
-    # Example: Identify sentences containing key terms or follow specific patterns
-    key_information = []  # Placeholder, customize this according to your requirements
-    return key_information
+# Load SpaCy model
+nlp = spacy.load('en_core_web_sm')
 
-# Example usage
-if __name__ == "__main__":
-    # Example legal document text
-    legal_text = """
-    This agreement ("Agreement") is entered into between John Doe ("Client") and XYZ Corporation ("Provider").
-    1. Scope of Services: Provider agrees to provide legal consultation services to Client.
-    2. Payment: Client agrees to pay Provider a fee of $100 per hour for the services rendered.
-    ...
-    """
+# Load summarizer
+summarizer = pipeline("summarization")
+
+def preprocess_text(text):
+    doc = nlp(text)
+    return ' '.join([token.lemma_ for token in doc if not token.is_stop])
+
+def extract_entities(text):
+    doc = nlp(text)
+    return [(entity.text, entity.label_) for entity in doc.ents]
+
+def summarize_text(text):
+    return summarizer(text, max_length=130, min_length=30, do_sample=False)[0]['summary_text']
+
+# Example document
+document = """
+This Lease Agreement ("Agreement") is made and entered into on July 1, 2024, by and between ABC Corp ("Lessor") and John Doe ("Lessee"). The Lessor agrees to lease the property located at 123 Main St, Cityville, for a term of 12 months commencing on August 1, 2024, and ending on July 31, 2025. The Lessee agrees to pay a monthly rent of $1,500 on the first day of each month. The Lessor and Lessee further agree to abide by the terms and conditions set forth in this Agreement.
+"""
+
+# Preprocess the text
+preprocessed_text = preprocess_text(document)
+
+# Extract entities
+entities = extract_entities(preprocessed_text)
+print("Extracted Entities:", entities)
+
+# Summarize the text
+summary = summarize_text(preprocessed_text)
+print("Summary:", summary)
+
+
     
-    # Step 1: Preprocessing
-    preprocessed_text = preprocess_text(legal_text)
-    
-    # Step 2: Named Entity Recognition (NER)
-    entities = perform_ner(preprocessed_text)
-    print("Named Entities:", entities)
-    
-    # Step 3: Legal Terminology Identification
-    legal_terms = identify_legal_terminology(preprocessed_text)
-    print("Legal Terminology:", legal_terms)
-    
-    # Step 4: Key Information Extraction
-    key_information = extract_key_information(preprocessed_text)
-    print("Key Information:", key_information)
